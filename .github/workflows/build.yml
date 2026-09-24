@@ -1,0 +1,43 @@
+name: Build Android APK
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libsqlite3-dev sqlite3 bzip2 libbz2-dev \
+            zlib1g-dev libssl-dev openssl libgdbm-dev libgdbm-compat-dev liblzma-dev \
+            libreadline-dev libffi-dev libgl1-mesa-dev libgles2-mesa-dev ccache libffi7
+
+      - name: Install Buildozer & Cython
+        run: |
+          pip install --upgrade pip
+          pip install buildozer cython setuptools
+
+      - name: Initialize and Build APK
+        run: |
+          # Generate default config if it doesn't exist
+          [ -f buildozer.spec ] || buildozer init
+          
+          # Force python3 and kivy in requirements
+          sed -i 's/^requirements =.*/requirements = python3,kivy/' buildozer.spec
+          
+          # Run non-interactive build
+          buildozer -s android debug
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alchemy-app-apk
+          path: bin/*.apk

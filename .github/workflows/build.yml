@@ -1,4 +1,4 @@
-name: Build Android APK
+Name: Build Android APK
 
 on:
   push:
@@ -51,6 +51,8 @@ jobs:
             automake \
             libtool \
             libtool-bin \
+            libltdl-dev \
+            autopoint \
             m4 \
             gettext \
             pkg-config
@@ -90,6 +92,8 @@ jobs:
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: Build APK with Buildozer
+        env:
+          ACLOCAL_PATH: /usr/share/aclocal
         run: |
           yes | buildozer -s android debug
 
@@ -98,3 +102,4 @@ jobs:
         with:
           name: alchemy-app-apk
           path: bin/*.apk
+          

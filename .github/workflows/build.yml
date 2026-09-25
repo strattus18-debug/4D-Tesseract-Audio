@@ -54,20 +54,43 @@ jobs:
           pip install --upgrade pip setuptools
           pip install buildozer cython
 
-      - name: Build APK with Buildozer
+      - name: Create buildozer.spec
         run: |
-          # 1. Create buildozer.spec if it doesn't exist
-          if [ ! -f buildozer.spec ]; then
-            buildozer init
-            sed -i 's/^title =.*/title = Alchemy Engine/' buildozer.spec
-            sed -i 's/^package.name =.*/package.name = alchemyengine/' buildozer.spec
-            sed -i 's/^package.domain =.*/package.domain = org.test/' buildozer.spec
-            sed -i 's/^requirements =.*/requirements = python3,kivy/' buildozer.spec
-            sed -i 's/# android.permissions =.*/android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE/' buildozer.spec
-          fi
+          cat << 'EOF' > buildozer.spec
+          [app]
+          title = Alchemy Engine
+          package.name = alchemyengine
+          package.domain = org.test
+          source.dir = .
+          source.include_exts = py,png,jpg,kv,atlas
+          version = 0.1
+          requirements = python3,kivy
+          orientation = portrait
+          fullscreen = 0
+          
+          android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
+          android.api = 33
+          android.minapi = 21
+          android.sdk_build_tools = 33.0.2
+          android.ndk = 25b
+          android.accept_sdk_license = True
+          android.archs = arm64-v8a, armeabi-v7a
+          p4a.branch = master
 
-          # 2. Run non-interactive build
-          buildozer --accept-sdk-license android debug
+          [buildozer]
+          log_level = 2
+          warn_on_root = 1
+          EOF
+
+      - name: Pre-accept Android SDK Licenses & Build APK
+        run: |
+          # Create SDK license directory manually to prevent build-tools license prompt timeouts
+          mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
+          echo -e "\n24333f8a63b6825ea9c5514f83c2829b004d1fee" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
+          
+          # Execute buildozer run
+          buildozer -s android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

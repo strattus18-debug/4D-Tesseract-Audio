@@ -1,4 +1,4 @@
-name: Build Android APK
+Name: Build Android APK
 
 on:
   push:
@@ -50,6 +50,9 @@ jobs:
             autoconf \
             automake \
             libtool \
+            libtool-bin \
+            m4 \
+            gettext \
             pkg-config
           pip install --upgrade pip setuptools
           pip install buildozer cython
@@ -71,8 +74,8 @@ jobs:
           android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
           android.api = 33
           android.minapi = 21
-          android.ndk = 25c
-          android.accept_sdk_license = True
+          android.ndk = 25b
+          android.accept_sdk_licence = True
           android.archs = arm64-v8a, armeabi-v7a
 
           [buildozer]
@@ -80,9 +83,14 @@ jobs:
           warn_on_root = 1
           EOF
 
+      - name: Pre-accept Android SDK Licenses
+        run: |
+          mkdir -p ~/.android
+          touch ~/.android/repositories.cfg
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
       - name: Build APK with Buildozer
         run: |
-          # Pre-accept all licenses across all SDK locations automatically
           yes | buildozer -s android debug
 
       - name: Upload APK

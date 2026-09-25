@@ -56,8 +56,18 @@ jobs:
 
       - name: Build APK with Buildozer
         run: |
-          # Automatically accept SDK licenses in non-interactive environment
-          yes | buildozer -s android debug
+          # 1. Create buildozer.spec if it doesn't exist
+          if [ ! -f buildozer.spec ]; then
+            buildozer init
+            sed -i 's/^title =.*/title = Alchemy Engine/' buildozer.spec
+            sed -i 's/^package.name =.*/package.name = alchemyengine/' buildozer.spec
+            sed -i 's/^package.domain =.*/package.domain = org.test/' buildozer.spec
+            sed -i 's/^requirements =.*/requirements = python3,kivy/' buildozer.spec
+            sed -i 's/# android.permissions =.*/android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE/' buildozer.spec
+          fi
+
+          # 2. Run non-interactive build
+          buildozer --accept-sdk-license android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
